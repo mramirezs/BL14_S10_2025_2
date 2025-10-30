@@ -1,5 +1,5 @@
 # Elementos de la Sintaxis de Shell Scripting I
-## Aplicación de Variables a Proyectos Bioinformáticos
+## Variables, Shell y Operaciones
 
 ## Información del Curso
 - **Programa:** Biología - Bioinformática
@@ -9,853 +9,1111 @@
 
 ## Logro de la Sesión
 Al finalizar la sesión, el estudiante será capaz de:
-- Aplicar variables en la automatización de proyectos bioinformáticos reales
-- Diseñar la estructura estándar de un proyecto de análisis genómico
-- Crear scripts que organicen automáticamente espacios de trabajo
-- Desarrollar scripts que analicen y generen reportes de datos genómicos
-- Implementar buenas prácticas en documentación de proyectos
+- Definir y utilizar variables en shell scripting
+- Diferenciar entre variables locales y globales
+- Comprender el concepto de shell vs subshell
+- Manipular la variable de entorno PATH
+- Aplicar variables especiales en scripts bioinformáticos
+- Realizar operaciones aritméticas y expansión de comandos
 
-**Palabras clave:** Estructura de Proyecto, Automatización, Análisis Genómico, Scripts Productivos, Documentación
-
----
-
-## 1. ESTRUCTURA ESTÁNDAR DE PROYECTO DE ANÁLISIS DE GENOMAS BACTERIANOS
-
-### ¿Por qué Organizar el Proyecto?
-
-La **organización** de un proyecto bioinformático es crucial para:
-- **Reproducibilidad:** Otros investigadores pueden entender y repetir el análisis
-- **Mantenibilidad:** Es fácil encontrar archivos meses o años después
-- **Escalabilidad:** Agregar nuevas muestras o análisis sin confusión
-- **Documentación:** Claridad en el flujo de trabajo
-
-### Estructura Recomendada para Análisis de Genomas Bacterianos
-
-```
-proyecto_genoma_bacteriano/
-│
-├── README.md                 # Descripción general del proyecto
-├── metadata.txt              # Información de muestras y experimento
-│
-├── datos_crudos/
-│   ├── genomas_ensamblados/  # Archivos FASTA de genomas
-│   │   ├── bacteria_001.fasta
-│   │   ├── bacteria_002.fasta
-│   │   └── ...
-│   ├── secuencias_raw/       # Lecturas crudas (FASTQ)
-│   │   ├── muestra_001_R1.fastq
-│   │   ├── muestra_001_R2.fastq
-│   │   └── ...
-│   └── referencias/          # Genomas de referencia
-│       └── reference.fasta
-│
-├── datos_procesados/
-│   ├── ensamblajes/          # Genomas procesados/ensamblados
-│   ├── alineamientos/        # Archivos BAM/SAM
-│   ├── variantes/            # Archivos VCF
-│   └── anotaciones/          # Archivos GFF/GTF
-│
-├── resultados/
-│   ├── analisis_filogenetico/    # Árboles y análisis filogenéticos
-│   ├── pangenoma/                # Análisis de pangenoma
-│   ├── comparativo/              # Análisis comparativos
-│   └── reportes/                 # Reportes finales (PDF, HTML)
-│
-├── logs/
-│   ├── ejecucion_2025-02-15.log  # Registros de ejecución
-│   └── errores_2025-02-15.log    # Errores ocurridos
-│
-├── scripts/
-│   ├── setup_proyecto.sh          # Script de inicialización
-│   ├── analizar_genoma.sh         # Script de análisis
-│   └── utils/
-│       └── funciones_comunes.sh
-│
-└── documentacion/
-    ├── manual_usuario.md           # Instrucciones de uso
-    └── parametros_usados.txt       # Parámetros de ejecución
-```
-
-### Descripción de Cada Directorio
-
-| Directorio | Propósito | Contenido Típico |
-|------------|-----------|------------------|
-| `datos_crudos/` | Datos originales (nunca modificados) | FASTA, FASTQ, referencias |
-| `datos_procesados/` | Datos intermedios tras procesamiento | BAM, VCF, genomas anotados |
-| `resultados/` | Análisis finales y gráficos | Árboles filogenéticos, reportes |
-| `logs/` | Registros de ejecución | Mensajes de error, timestamps |
-| `scripts/` | Scripts de automatización | Scripts bash del proyecto |
-| `documentacion/` | Información del proyecto | Notas, métodos, decisiones |
+**Palabras clave:** Variables, Shell, Subshell, PATH, Operaciones, Expansión de comandos
 
 ---
 
-## 2. VARIABLES CLAVE PARA PROYECTOS GENÓMICOS
+## 1. CONCEPTOS FUNDAMENTALES SOBRE VARIABLES
 
-### Variables Estándar a Definir
+### ¿Qué es una Variable?
+
+Una **variable** es una ubicación en memoria donde se almacena un valor que puede ser:
+- **Creado** durante la ejecución del script
+- **Modificado** según las necesidades
+- **Guardado** para uso posterior en el mismo script
+- **Eliminado** cuando ya no se necesita
+
+**Analogía:** Una variable es como una caja etiquetada donde guardas información.
+
+### Características Importantes de las Variables
+
+1. **Naturaleza múltiple:** Pueden almacenar diferentes tipos de datos (texto, números, rutas)
+2. **Dinámicas:** Su valor puede cambiar durante la ejecución
+3. **Reutilizables:** Se pueden usar múltiples veces en un script
+4. **Eficientes:** Evitan repetir valores literal en todo el código
+
+**Ejemplo de ventaja:**
+
+```bash
+# SIN variables (repetitivo y difícil de mantener)
+echo "Proyecto: Mi_Genoma"
+mkdir Mi_Genoma
+cp archivo.fasta Mi_Genoma/
+cd Mi_Genoma
+
+# CON variables (flexible y reutilizable)
+PROYECTO="Mi_Genoma"
+echo "Proyecto: $PROYECTO"
+mkdir $PROYECTO
+cp archivo.fasta $PROYECTO/
+cd $PROYECTO
+```
+
+### Sintaxis Básica para Crear una Variable
+
+```bash
+nombre_variable=valor
+```
+
+**Reglas importantes:**
+- ⚠️ **NO debe haber espacios** alrededor del signo `=`
+- Las variables pueden contener letras, números y guiones bajos
+- No pueden empezar con número
+- Por convención, usa MAYÚSCULAS para nombres
+
+**Ejemplos correctos:**
+
+```bash
+PROYECTO="Analisis_RNA"        # Correcto
+NUMERO_MUESTRAS=50             # Correcto
+RUTA_DATOS="/home/usuario/datos" # Correcto
+```
+
+**Ejemplos INCORRECTOS:**
+
+```bash
+PROYECTO = "Analisis_RNA"      # ❌ Espacios alrededor de =
+numero_muestras = 50           # ❌ Espacios alrededor de =
+123VARIABLE="valor"            # ❌ Comienza con número
+```
+
+### Acceso a Variables: El Símbolo `$`
+
+Para usar el valor de una variable, debes antecederla con el símbolo `$`:
 
 ```bash
 #!/bin/bash
-# Variables del Proyecto
-PROJECT_NAME="Analisis_Genomas_Bacterianos_2025"
-PROJECT_DIR="$HOME/proyectos/$PROJECT_NAME"
-FECHA_CREACION=$(date +"%Y-%m-%d")
-USUARIO=$(whoami)
-VERSION_PROYECTO="1.0"
+NOMBRE="Juan"
+EDAD=25
 
-# Directorios Principales
-DATA_RAW="$PROJECT_DIR/datos_crudos"
-DATA_PROCESSED="$PROJECT_DIR/datos_procesados"
-RESULTS="$PROJECT_DIR/resultados"
-LOGS="$PROJECT_DIR/logs"
-SCRIPTS="$PROJECT_DIR/scripts"
-DOCS="$PROJECT_DIR/documentacion"
+echo $NOMBRE          # Imprime: Juan
+echo $EDAD            # Imprime: 25
+echo "Mi nombre es $NOMBRE"  # Imprime: Mi nombre es Juan
+```
 
-# Subdirectorios
-GENOMAS_RAW="$DATA_RAW/genomas_ensamblados"
-SECUENCIAS_RAW="$DATA_RAW/secuencias_raw"
-REFERENCIAS="$DATA_RAW/referencias"
-ENSAMBLAJES="$DATA_PROCESSED/ensamblajes"
-ALINEAMIENTOS="$DATA_PROCESSED/alineamientos"
+**Dos formas de acceder a variables:**
 
-# Archivo de Log
-LOG_FILE="$LOGS/ejecucion_$(date +%Y-%m-%d_%H-%M-%S).log"
+```bash
+# Forma 1: Simple (más común)
+echo $VARIABLE
+
+# Forma 2: Con llaves (más explícita)
+echo ${VARIABLE}
+```
+
+La forma con llaves es útil cuando la variable está seguida de texto:
+
+```bash
+ARCHIVO="genoma"
+# Sin llaves (confuso)
+echo $ARCHIVOv1.fasta    # Imprime: (nada, porque busca $ARCHIVOv1)
+
+# Con llaves (claro)
+echo ${ARCHIVO}v1.fasta  # Imprime: genomav1.fasta
 ```
 
 ---
 
-## 3. CASO PRÁCTICO 1: CREACIÓN AUTOMÁTICA DE ESTRUCTURA DE PROYECTO
+## 2. TIPOS DE VARIABLES: LOCALES Y GLOBALES
 
-### Objetivo
-Crear un script que **automatice la creación** de la estructura de carpetas estándar para un nuevo proyecto de análisis genómico, progresando desde simple a complejo.
+### Variables Locales
 
----
+Una **variable local** es accesible **solo** en el shell o subshell donde se definió.
 
-### Versión 1: Muy Simple (Solo Comandos Básicos)
+**Sintaxis:**
+```bash
+variable=valor
+```
+
+**Características:**
+- Alcance limitado al script o sesión actual
+- No se heredan a subshells
+- Ideales para valores temporales
+
+**Ejemplo:**
 
 ```bash
 #!/bin/bash
-# Script: setup_proyecto_v1.sh
-# Descripción: Crea estructura básica de proyecto
-# Autor: [Tu nombre]
-# Fecha: 2025-02-XX
+# Script: ejemplo_local.sh
 
-# Crear directorio principal
-mkdir proyecto_genoma
+# Definir variable local
+MUESTRA="bacteria_001"
 
-# Crear subdirectorios principales
-mkdir proyecto_genoma/datos_crudos
-mkdir proyecto_genoma/datos_procesados
-mkdir proyecto_genoma/resultados
-
-echo "Estructura básica creada."
+echo "Dentro del script: $MUESTRA"  # ✓ Funciona
 ```
-
-**Limitaciones:** 
-- ❌ No es flexible (nombre fijo)
-- ❌ Difícil de reutilizar
-- ❌ Sin información de logging
 
 **Ejecución:**
 ```bash
-bash setup_proyecto_v1.sh
+bash ejemplo_local.sh
+# Output: Dentro del script: bacteria_001
+
+echo $MUESTRA
+# Output: (vacío - la variable no existe fuera del script)
 ```
 
----
+### Variables Globales (De Entorno)
 
-### Versión 2: Con Variables (MEJORA IMPORTANTE)
+Una **variable global** es accesible desde cualquier shell, subshell o script.
 
-Aquí vemos el **poder de las variables** - el script ahora es reutilizable:
+**Sintaxis:**
+```bash
+export variable=valor
+```
+
+**Características:**
+- Alcance global (toda la sesión)
+- Se heredan a subshells
+- Persisten durante toda la sesión de usuario
+- Útiles para configuraciones que deben ser compartidas
+
+**Ejemplo:**
 
 ```bash
 #!/bin/bash
-# Script: setup_proyecto_v2.sh
-# Descripción: Crea estructura de proyecto usando variables
-# Autor: [Tu nombre]
-# Fecha: 2025-02-XX
-# Uso: bash setup_proyecto_v2.sh
+# Script: ejemplo_global.sh
 
-# ========== DEFINIR VARIABLES ==========
-NOMBRE_PROYECTO="Genoma_Bacteria_XYZ"
-DIRECTORIO_BASE="$HOME/proyectos"
-PROYECTO_DIR="$DIRECTORIO_BASE/$NOMBRE_PROYECTO"
+# Definir variable global
+export LABORATORIO="Genómica Computacional"
 
-# Subdirectorios principales
-DATOS_CRUDOS="$PROYECTO_DIR/datos_crudos"
-DATOS_PROCESADOS="$PROYECTO_DIR/datos_procesados"
-RESULTADOS="$PROYECTO_DIR/resultados"
-LOGS="$PROYECTO_DIR/logs"
-SCRIPTS="$PROYECTO_DIR/scripts"
+echo "Laboratorio: $LABORATORIO"  # ✓ Funciona
 
-# ========== CREAR ESTRUCTURA ==========
-# Crear directorio principal
-mkdir -p $PROYECTO_DIR
-
-# Crear subdirectorios principales
-mkdir -p $DATOS_CRUDOS
-mkdir -p $DATOS_PROCESADOS
-mkdir -p $RESULTADOS
-mkdir -p $LOGS
-mkdir -p $SCRIPTS
-
-# ========== MOSTRAR INFORMACIÓN ==========
-echo "======================================="
-echo "PROYECTO CREADO EXITOSAMENTE"
-echo "======================================="
-echo "Nombre: $NOMBRE_PROYECTO"
-echo "Ubicación: $PROYECTO_DIR"
-echo "Directorios creados:"
-echo "  - Datos crudos: $DATOS_CRUDOS"
-echo "  - Datos procesados: $DATOS_PROCESADOS"
-echo "  - Resultados: $RESULTADOS"
-echo "  - Logs: $LOGS"
-echo "  - Scripts: $SCRIPTS"
-echo "======================================="
+# Crear un subshell
+bash -c 'echo "En subshell: $LABORATORIO"'  # ✓ También funciona
 ```
-
-**Ventajas:**
-- ✅ Variables reutilizables
-- ✅ Fácil de modificar
-- ✅ Mensaje de confirmación claro
 
 **Ejecución:**
 ```bash
-bash setup_proyecto_v2.sh
+source ejemplo_global.sh
+# Output: Laboratorio: Genómica Computacional
+# Output: En subshell: Genómica Computacional
+
+echo $LABORATORIO
+# Output: Genómica Computacional (persiste en la sesión)
+```
+
+### Comparación: Local vs Global
+
+| Aspecto | Local | Global |
+|---------|-------|--------|
+| Sintaxis | `variable=valor` | `export variable=valor` |
+| Alcance | Solo script actual | Toda la sesión |
+| Heredada a subshell | ❌ No | ✅ Sí |
+| Persiste en sesión | ❌ No | ✅ Sí |
+| Caso de uso | Valores temporales | Configuraciones compartidas |
+
+---
+
+## 3. SHELL VS SUBSHELL
+
+### Concepto: ¿Qué es un Shell y un Subshell?
+
+Cuando abres una terminal, estás en un **shell** (intérprete de comandos). Si ejecutas un script o comando que abre otro shell, creas un **subshell** (shell hijo).
+
+**Visualización:**
+
+```
+TERMINAL PRINCIPAL
+│
+├── SHELL PADRE (tu sesión)
+│   │   [VARIABLE_1 = "valor_1"]
+│   │
+│   └─→ SUBSHELL (script o comando)
+│       [VARIABLE_1 = "valor_1" (heredada)]
+│       [VARIABLE_2 = "valor_2" (nueva)]
+│
+└── Variables del padre NO se modifican por cambios en subshell
+```
+
+### Comportamiento de Variables en Shell vs Subshell
+
+#### Variables Locales: NO se heredan
+
+```bash
+#!/bin/bash
+# Script: padre.sh
+
+VARIABLE_LOCAL="valor del padre"
+
+echo "En el padre: $VARIABLE_LOCAL"
+
+# Crear un subshell
+bash -c 'echo "En el subshell: $VARIABLE_LOCAL"'
+```
+
+**Ejecución:**
+```bash
+bash padre.sh
+
+# Output:
+# En el padre: valor del padre
+# En el subshell: (vacío)
+```
+
+#### Variables Globales: SÍ se heredan
+
+```bash
+#!/bin/bash
+# Script: padre_global.sh
+
+export VARIABLE_GLOBAL="valor del padre"
+
+echo "En el padre: $VARIABLE_GLOBAL"
+
+# Crear un subshell
+bash -c 'echo "En el subshell: $VARIABLE_GLOBAL"'
+```
+
+**Ejecución:**
+```bash
+bash padre_global.sh
+
+# Output:
+# En el padre: valor del padre
+# En el subshell: valor del padre
+```
+
+### Modificaciones en Subshell NO afectan al Shell Padre
+
+```bash
+#!/bin/bash
+# Script: modificacion.sh
+
+export VARIABLE="valor inicial"
+
+echo "Antes - Padre: $VARIABLE"
+
+# Crear subshell y modificar variable
+bash -c 'export VARIABLE="valor modificado"; echo "En subshell: $VARIABLE"'
+
+# Verificar en el padre
+echo "Después - Padre: $VARIABLE"
+```
+
+**Ejecución:**
+```bash
+bash modificacion.sh
+
+# Output:
+# Antes - Padre: valor inicial
+# En subshell: valor modificado
+# Después - Padre: valor inicial   ← NO cambió
+```
+
+### Comandos Importantes para Shell y Subshell
+
+| Comando | Descripción | Ejemplo |
+|---------|-------------|---------|
+| `bash` | Crear un nuevo subshell | `bash` |
+| `exit` | Salir del subshell actual | `exit` |
+| `export` | Convertir variable local a global | `export VARIABLE="valor"` |
+| `$$` | PID del shell actual | `echo $$` |
+| `$SHELL` | Shell por defecto del usuario | `echo $SHELL` |
+
+**Demostraciones prácticas:**
+
+```bash
+# Ver el PID del shell actual
+echo "PID del shell padre: $$"
+
+# Crear un subshell y ver su PID diferente
+bash -c 'echo "PID del subshell: $$"'
+
+# Verificar shell actual
+echo "Shell actual: $SHELL"
 ```
 
 ---
 
-### Versión 3: Estructura Completa (Production-Ready)
+## 4. VARIABLES DE ENTORNO GLOBALES DEL SISTEMA
 
-Esta es la versión profesional que incluye subdirectorios completos, archivos de configuración y logging:
+### ¿Qué son Variables de Entorno?
+
+Las **variables de entorno** son variables globales predefinidas por el sistema operativo que contienen información sobre la configuración del sistema.
+
+### Variables Importantes del Sistema
+
+| Variable | Descripción | Ejemplo |
+|----------|-------------|---------|
+| `$PATH` | Directorios donde el sistema busca comandos | `/usr/local/bin:/usr/bin:/bin` |
+| `$HOME` | Directorio personal del usuario | `/home/estudiante` |
+| `$USER` | Nombre del usuario actual | `estudiante` |
+| `$SHELL` | Shell por defecto del usuario | `/bin/bash` |
+| `$PWD` | Directorio de trabajo actual | `/home/estudiante/proyecto` |
+| `$HOSTNAME` | Nombre de la máquina | `laptop-001` |
+| `$LANG` | Idioma del sistema | `es_PE.UTF-8` |
+| `$TERM` | Tipo de terminal | `xterm-256color` |
+
+### Visualizar Variables de Entorno
+
+#### Opción 1: Ver una variable específica
+
+```bash
+echo $HOME
+# Output: /home/estudiante
+
+echo $USER
+# Output: estudiante
+```
+
+#### Opción 2: Usar `printenv`
+
+```bash
+# Ver una variable específica
+printenv HOME
+# Output: /home/estudiante
+
+# Ver todas las variables
+printenv
+
+# Ver primeras líneas
+printenv | head
+```
+
+#### Opción 3: Usar `env`
+
+```bash
+# Ver todas las variables con env
+env
+
+# Ver variables que contienen "PATH"
+env | grep PATH
+```
+
+### Ejemplo Práctico: Inspeccionar tu Entorno
 
 ```bash
 #!/bin/bash
-# Script: setup_proyecto.sh
-# Descripción: Crea estructura completa de proyecto de análisis genómico
-# Autor: [Tu nombre]
-# Fecha: 2025-02-XX
-# Uso: bash setup_proyecto.sh [nombre_proyecto]
+# Script: inspeccionar_entorno.sh
 
-# ========== VARIABLES DEL SCRIPT ==========
-# Si el usuario proporciona nombre, usarlo; si no, usar valor por defecto
-NOMBRE_PROYECTO="${1:-Genoma_Bacteria_Default}"
-DIRECTORIO_BASE="$HOME/proyectos"
-PROYECTO_DIR="$DIRECTORIO_BASE/$NOMBRE_PROYECTO"
+echo "=== INFORMACIÓN DEL ENTORNO ==="
+echo ""
+echo "Usuario: $USER"
+echo "Directorio home: $HOME"
+echo "Directorio actual: $PWD"
+echo "Shell: $SHELL"
+echo "Máquina: $HOSTNAME"
+echo ""
+echo "=== RUTAS EN PATH ==="
+echo $PATH | tr ':' '\n'
+```
 
-# Variables de tiempo y usuario
+**Ejecución:**
+```bash
+bash inspeccionar_entorno.sh
+
+# Output:
+# === INFORMACIÓN DEL ENTORNO ===
+# 
+# Usuario: estudiante
+# Directorio home: /home/estudiante
+# Directorio actual: /home/estudiante/proyecto
+# Shell: /bin/bash
+# Máquina: laptop-001
+# 
+# === RUTAS EN PATH ===
+# /usr/local/bin
+# /usr/bin
+# /bin
+# ...
+```
+
+---
+
+## 5. MANIPULACIÓN DE LA VARIABLE PATH
+
+### ¿Qué es PATH?
+
+`PATH` es una **variable de entorno** que contiene una lista de **directorios separados por `:`** donde el sistema busca comandos ejecutables cuando escribes un comando.
+
+**Estructura:**
+```
+/usr/local/bin : /usr/bin : /bin : /usr/sbin : /sbin
+```
+
+Cuando escribes un comando como `ls`, el sistema busca el archivo ejecutable `ls` en estos directorios, en orden, hasta encontrarlo.
+
+### Ver el PATH Actual
+
+```bash
+# Ver PATH completo
+echo $PATH
+
+# Ver cada directorio en una línea
+echo $PATH | tr ':' '\n'
+
+# Output típico:
+# /usr/local/bin
+# /usr/bin
+# /bin
+# /usr/sbin
+# /sbin
+```
+
+### Agregar Directorios al PATH
+
+#### Opción 1: Agregar al final del PATH
+
+```bash
+export PATH=$PATH:/nueva/ruta
+```
+
+**Ejemplo:**
+
+```bash
+#!/bin/bash
+# Script: agregar_path.sh
+
+# Mostrar PATH original
+echo "PATH original:"
+echo $PATH | tr ':' '\n'
+
+# Agregar nueva ruta
+export PATH=$PATH:/home/usuario/mis_programas
+
+echo ""
+echo "PATH actualizado:"
+echo $PATH | tr ':' '\n'
+```
+
+#### Opción 2: Agregar al inicio del PATH (búsqueda prioritaria)
+
+```bash
+export PATH=/nueva/ruta:$PATH
+```
+
+**Ejemplo:**
+
+```bash
+#!/bin/bash
+# Si hay versiones conflictivas de un comando, esta ruta se busca primero
+export PATH=/home/usuario/herramientas_nuevas:$PATH
+```
+
+### Caso Práctico: Instalación de Herramienta Bioinformática
+
+```bash
+#!/bin/bash
+# Script: instalar_fastqc.sh
+# Instala FastQC y lo agrega al PATH
+
+# Crear directorio para herramientas
+mkdir -p ~/biotools
+cd ~/biotools
+
+# Descargar FastQC
+echo "Descargando FastQC..."
+wget https://www.bioinformatics.babraham.ac.uk/projects/fastqc/fastqc_v0.12.1.zip
+
+# Descomprimir
+echo "Descomprimiendo..."
+unzip fastqc_v0.12.1.zip
+
+# Agregar al PATH
+export PATH=$PATH:~/biotools/FastQC
+
+# Verificar
+echo "Verificando PATH:"
+echo $PATH | tr ':' '\n'
+
+# Probar comando
+fastqc --version
+```
+
+### Hacer el PATH Permanente
+
+Para que los cambios persistan entre sesiones, agrega la línea al archivo `~/.bashrc`:
+
+```bash
+# Abrir archivo de configuración
+nano ~/.bashrc
+
+# Agregar al final:
+export PATH=$PATH:~/biotools/FastQC
+
+# Guardar y recargar
+source ~/.bashrc
+```
+
+---
+
+## 6. OPERACIONES CON VARIABLES
+
+### Comillas Simples vs Comillas Dobles
+
+#### Comillas Dobles (`" "`)
+
+Las comillas dobles **permiten la expansión** de variables dentro de ellas:
+
+```bash
+#!/bin/bash
+NOMBRE="Juan"
+
+echo "Hola $NOMBRE"            # Resultado: Hola Juan
+echo "Hola ${NOMBRE}"          # Resultado: Hola Juan
+echo "El usuario es: $USER"    # Resultado: El usuario es: estudiante
+```
+
+**Cuándo usar:** Cuando necesitas que las variables se expandan
+
+#### Comillas Simples (`' '`)
+
+Las comillas simples **no permiten expansión** - el texto es literal:
+
+```bash
+#!/bin/bash
+NOMBRE="Juan"
+
+echo 'Hola $NOMBRE'            # Resultado: Hola $NOMBRE (literal)
+echo 'El usuario es: $USER'    # Resultado: El usuario es: $USER (literal)
+```
+
+**Cuándo usar:** Cuando necesitas texto exacto sin variable
+
+### Comparación Práctica
+
+```bash
+#!/bin/bash
+# Script: comillas_ejemplo.sh
+
+ARCHIVO="genoma.fasta"
+RUTA="/home/usuario/datos"
+
+echo "=== CON COMILLAS DOBLES ==="
+echo "Archivo: $ARCHIVO"              # ✓ Expande variable
+echo "Ruta: $RUTA"                    # ✓ Expande variable
+
+echo ""
+echo "=== CON COMILLAS SIMPLES ==="
+echo 'Archivo: $ARCHIVO'              # ✗ No expande
+echo 'Ruta: $RUTA'                    # ✗ No expande
+
+echo ""
+echo "=== SIN COMILLAS ==="
+echo Contenido de $ARCHIVO            # Funciona pero no recomendado si hay espacios
+```
+
+**Output:**
+```
+=== CON COMILLAS DOBLES ===
+Archivo: genoma.fasta
+Ruta: /home/usuario/datos
+
+=== CON COMILLAS SIMPLES ===
+Archivo: $ARCHIVO
+Ruta: $RUTA
+
+=== SIN COMILLAS ===
+Contenido de genoma.fasta
+```
+
+### Operaciones Aritméticas
+
+#### Método 1: `$(( ))`
+
+```bash
+#!/bin/bash
+suma=$((13 + 8))
+echo "Suma: $suma"              # Resultado: 21
+
+resta=$((20 - 5))
+echo "Resta: $resta"            # Resultado: 15
+
+multiplicacion=$((4 * 5))
+echo "Multiplicación: $multiplicacion"  # Resultado: 20
+
+division=$((100 / 5))
+echo "División: $division"      # Resultado: 20
+
+modulo=$((17 % 5))
+echo "Módulo: $modulo"          # Resultado: 2
+```
+
+#### Método 2: `$[ ]` (menos común)
+
+```bash
+suma=$[13 + 8]
+echo $suma                      # Resultado: 21
+```
+
+#### Método 3: `bc` (para decimales)
+
+```bash
+#!/bin/bash
+# bc permite decimales
+resultado=$(echo "10.5 + 3.2" | bc)
+echo "Resultado: $resultado"    # Resultado: 13.7
+
+promedio=$(echo "scale=2; (85 + 90 + 78) / 3" | bc)
+echo "Promedio: $promedio"      # Resultado: 84.33
+```
+
+### Ejemplo Práctico: Cálculos Bioinformáticos
+
+```bash
+#!/bin/bash
+# Script: calculos_genomica.sh
+
+# Conteos de secuencias
+SECUENCIAS_TOTAL=1000000
+SECUENCIAS_PROCESADAS=$((SECUENCIAS_TOTAL / 10))
+
+echo "Total de secuencias: $SECUENCIAS_TOTAL"
+echo "Procesadas: $SECUENCIAS_PROCESADAS"
+echo "Porcentaje: $((SECUENCIAS_PROCESADAS * 100 / SECUENCIAS_TOTAL))%"
+
+# Cálculo de tamaño de archivo
+TAMAÑO_BYTES=1048576
+TAMAÑO_MB=$(echo "scale=2; $TAMAÑO_BYTES / 1048576" | bc)
+echo "Tamaño en MB: $TAMAÑO_MB"
+```
+
+### Expansión de Comandos
+
+La **expansión de comandos** permite guardar el resultado de un comando en una variable.
+
+#### Sintaxis Moderna: `$(comando)`
+
+```bash
+#!/bin/bash
+# Obtener fecha actual
 FECHA=$(date +"%Y-%m-%d")
-HORA=$(date +"%H:%M:%S")
+echo "Hoy es: $FECHA"
+
+# Obtener usuario actual
 USUARIO=$(whoami)
-VERSION_PROYECTO="1.0"
+echo "Usuario: $USUARIO"
 
-# Directorios principales
-DATOS_CRUDOS="$PROYECTO_DIR/datos_crudos"
-DATOS_PROCESADOS="$PROYECTO_DIR/datos_procesados"
-RESULTADOS="$PROYECTO_DIR/resultados"
-LOGS="$PROYECTO_DIR/logs"
-SCRIPTS="$PROYECTO_DIR/scripts"
-DOCS="$PROYECTO_DIR/documentacion"
+# Obtener directorio actual
+DIRECTORIO=$(pwd)
+echo "Directorio: $DIRECTORIO"
 
-# Subdirectorios de datos crudos
-GENOMAS_RAW="$DATOS_CRUDOS/genomas_ensamblados"
-SECUENCIAS_RAW="$DATOS_CRUDOS/secuencias_raw"
-REFERENCIAS="$DATOS_CRUDOS/referencias"
-
-# Subdirectorios de datos procesados
-ENSAMBLAJES="$DATOS_PROCESADOS/ensamblajes"
-ALINEAMIENTOS="$DATOS_PROCESADOS/alineamientos"
-VARIANTES="$DATOS_PROCESADOS/variantes"
-ANOTACIONES="$DATOS_PROCESADOS/anotaciones"
-
-# Subdirectorios de resultados
-FILOGENIA="$RESULTADOS/analisis_filogenetico"
-PANGENOMA="$RESULTADOS/pangenoma"
-COMPARATIVO="$RESULTADOS/comparativo"
-REPORTES="$RESULTADOS/reportes"
-
-# ========== CREAR ESTRUCTURA DE DIRECTORIOS ==========
-echo "[INFO] Creando estructura de proyecto..."
-
-# Directorio principal
-mkdir -p $PROYECTO_DIR
-
-# Directorios principales
-mkdir -p $DATOS_CRUDOS $DATOS_PROCESADOS $RESULTADOS $LOGS $SCRIPTS $DOCS
-
-# Subdirectorios de datos crudos
-mkdir -p $GENOMAS_RAW $SECUENCIAS_RAW $REFERENCIAS
-
-# Subdirectorios de datos procesados
-mkdir -p $ENSAMBLAJES $ALINEAMIENTOS $VARIANTES $ANOTACIONES
-
-# Subdirectorios de resultados
-mkdir -p $FILOGENIA $PANGENOMA $COMPARATIVO $REPORTES
-
-# ========== CREAR ARCHIVOS DE CONFIGURACIÓN ==========
-
-# Crear README.md
-cat > $PROYECTO_DIR/README.md << 'EOF'
-# Análisis de Genomas Bacterianos
-
-## Información General
-- **Nombre del Proyecto:** [Ingresar aquí]
-- **Fecha de Creación:** [Fecha]
-- **Investigador Responsable:** [Nombre]
-- **Institución:** Facultad de Ciencias de la Salud - Programa de Biología
-
-## Descripción del Proyecto
-[Descripción del análisis y objetivos]
-
-## Estructura de Directorios
-- `datos_crudos/`: Datos originales sin procesar
-  - `genomas_ensamblados/`: Archivos FASTA
-  - `secuencias_raw/`: Archivos FASTQ
-  - `referencias/`: Genomas de referencia
-- `datos_procesados/`: Datos intermedios tras procesamiento
-  - `ensamblajes/`: Genomas ensamblados
-  - `alineamientos/`: Archivos BAM/SAM
-  - `variantes/`: Archivos VCF
-  - `anotaciones/`: Archivos GFF/GTF
-- `resultados/`: Análisis finales
-  - `analisis_filogenetico/`: Árboles filogenéticos
-  - `pangenoma/`: Análisis de pangenoma
-  - `comparativo/`: Análisis comparativos
-  - `reportes/`: Reportes y visualizaciones
-- `logs/`: Registros de ejecución
-- `scripts/`: Scripts de automatización
-- `documentacion/`: Información del proyecto
-
-## Instrucciones de Uso
-1. Agregar datos en `datos_crudos/`
-2. Ejecutar scripts de análisis desde `scripts/`
-3. Revisar resultados en `resultados/`
-4. Consultar logs en `logs/` si hay errores
-EOF
-
-# Crear metadata.txt
-cat > $PROYECTO_DIR/metadata.txt << EOF
-==============================================
-INFORMACIÓN DEL PROYECTO
-==============================================
-Nombre: $NOMBRE_PROYECTO
-Fecha de creación: $FECHA a las $HORA
-Usuario: $USUARIO
-Directorio base: $PROYECTO_DIR
-Versión del proyecto: $VERSION_PROYECTO
-
-==============================================
-INFORMACIÓN DEL SISTEMA
-==============================================
-Sistema operativo: $(uname -s)
-Versión del kernel: $(uname -r)
-Shell: $SHELL
-Bash versión: $BASH_VERSION
-
-==============================================
-DIRECTORIOS PRINCIPALES
-==============================================
-Datos crudos: $DATOS_CRUDOS
-Datos procesados: $DATOS_PROCESADOS
-Resultados: $RESULTADOS
-Logs: $LOGS
-Scripts: $SCRIPTS
-Documentación: $DOCS
-
-==============================================
-SUBDIRECTORIOS ESPECIALIZADOS
-==============================================
-Genomas ensamblados: $GENOMAS_RAW
-Secuencias raw: $SECUENCIAS_RAW
-Referencias: $REFERENCIAS
-Ensamblajes: $ENSAMBLAJES
-Alineamientos: $ALINEAMIENTOS
-Variantes: $VARIANTES
-Anotaciones: $ANOTACIONES
-EOF
-
-# Crear archivo de log inicial
-cat > $LOGS/inicio_proyecto.log << EOF
-[$(date +"%Y-%m-%d %H:%M:%S")] === PROYECTO INICIALIZADO ===
-Usuario: $USUARIO
-Directorio: $PROYECTO_DIR
-Estructura de directorios creada exitosamente.
-Versión del proyecto: $VERSION_PROYECTO
-EOF
-
-# ========== MOSTRAR RESUMEN ==========
-echo ""
-echo "=========================================="
-echo "✓ PROYECTO CREADO EXITOSAMENTE"
-echo "=========================================="
-echo ""
-echo "INFORMACIÓN DEL PROYECTO:"
-echo "  Nombre: $NOMBRE_PROYECTO"
-echo "  Ubicación: $PROYECTO_DIR"
-echo "  Usuario: $USUARIO"
-echo "  Fecha: $FECHA a las $HORA"
-echo ""
-echo "ESTRUCTURA DE DIRECTORIOS CREADA:"
-echo "├── datos_crudos/"
-echo "│   ├── genomas_ensamblados/"
-echo "│   ├── secuencias_raw/"
-echo "│   └── referencias/"
-echo "├── datos_procesados/"
-echo "│   ├── ensamblajes/"
-echo "│   ├── alineamientos/"
-echo "│   ├── variantes/"
-echo "│   └── anotaciones/"
-echo "├── resultados/"
-echo "│   ├── analisis_filogenetico/"
-echo "│   ├── pangenoma/"
-echo "│   ├── comparativo/"
-echo "│   └── reportes/"
-echo "├── logs/"
-echo "├── scripts/"
-echo "└── documentacion/"
-echo ""
-echo "ARCHIVOS CREADOS AUTOMÁTICAMENTE:"
-echo "  ✓ README.md (descripción del proyecto)"
-echo "  ✓ metadata.txt (información de configuración)"
-echo "  ✓ logs/inicio_proyecto.log (registro inicial)"
-echo ""
-echo "PRÓXIMOS PASOS:"
-echo "1. cd $PROYECTO_DIR"
-echo "2. Agregar archivos en datos_crudos/"
-echo "3. Crear scripts de análisis en scripts/"
-echo "4. Documentar avances en documentacion/"
-echo ""
-echo "=========================================="
+# Contar archivos
+NUM_ARCHIVOS=$(ls -1 | wc -l)
+echo "Número de archivos: $NUM_ARCHIVOS"
 ```
 
-**Características de la Versión 3:**
-- ✅ Acepta nombre de proyecto como argumento (`$1`)
-- ✅ Crea estructura completa con 15+ subdirectorios
-- ✅ Genera archivos de configuración automáticos
-- ✅ Registra información en log
-- ✅ Muestra resumen visual detallado
-- ✅ Usa variables para todo (fácil mantener)
+#### Sintaxis Clásica: `` `comando` `` (backticks)
 
-**Ejecución:**
 ```bash
-# Crear proyecto con nombre personalizado
-bash setup_proyecto.sh "Mi_Estudio_Genoma_2025"
-
-# O usar nombre por defecto
-bash setup_proyecto.sh
+# Menos recomendada, pero aún funciona
+FECHA=`date +"%Y-%m-%d"`
+echo "Hoy es: $FECHA"
 ```
 
----
-
-## 4. CASO PRÁCTICO 2: ANÁLISIS DE GENOMAS Y GENERACIÓN DE REPORTES
-
-### Objetivo
-Crear scripts que **analicen archivos genómicos** (FASTA) y generen reportes automáticos, con progresión de complejidad.
-
----
-
-### Versión 1: Análisis Muy Simple
+### Ejemplo Práctico: Información del Sistema
 
 ```bash
 #!/bin/bash
-# Script: analizar_genoma_v1.sh
-# Descripción: Análisis básico de un archivo FASTA
-# Autor: [Tu nombre]
-# Fecha: 2025-02-XX
-# Uso: bash analizar_genoma_v1.sh archivo.fasta
+# Script: info_sistema.sh
 
-# Variables
-ARCHIVO_FASTA="$1"
-NOMBRE_MUESTRA=$(basename $ARCHIVO_FASTA .fasta)
+echo "=== INFORMACIÓN DEL SISTEMA ==="
+echo ""
+echo "Fecha y hora: $(date)"
+echo "Usuario: $(whoami)"
+echo "Directorio actual: $(pwd)"
+echo "Hostname: $(hostname)"
+echo "Kernel: $(uname -r)"
+echo ""
+echo "=== INFORMACIÓN DEL PROYECTO ==="
 
-# Información básica
-echo "=== ANÁLISIS BÁSICO DE FASTA ==="
-echo "Archivo: $ARCHIVO_FASTA"
-echo "Tamaño: $(du -h $ARCHIVO_FASTA | cut -f1)"
-echo "Número de secuencias: $(grep -c '^>' $ARCHIVO_FASTA)"
-echo "Nombre de muestra: $NOMBRE_MUESTRA"
+PROYECTO="Analisis_RNA"
+FECHA_INICIO=$(date +"%Y-%m-%d")
+ARCHIVOS_CREADOS=$(ls -1 | wc -l)
+
+echo "Proyecto: $PROYECTO"
+echo "Fecha inicio: $FECHA_INICIO"
+echo "Archivos en directorio: $ARCHIVOS_CREADOS"
+```
+
+---
+
+## 7. VARIABLES ESPECIALES DE SCRIPT
+
+Las **variables especiales** son variables predefinidas por bash que contienen información sobre el script y sus argumentos.
+
+### Variables Especiales Principales
+
+| Variable | Descripción | Ejemplo |
+|----------|-------------|---------|
+| `$0` | Nombre del script | `script.sh` |
+| `$1, $2, $3...` | Argumentos posicionales (1º, 2º, 3º, etc.) | `$1` = primer arg |
+| `$#` | Número total de argumentos | `3` |
+| `$$` | PID (Process ID) del shell actual | `1234` |
+| `$?` | Código de salida del último comando | `0` (éxito), `1` (error) |
+
+### `$0`: Nombre del Script
+
+```bash
+#!/bin/bash
+# Script: mostrar_nombre.sh
+
+echo "Nombre del script: $0"
+echo "Nombre sin ruta: $(basename $0)"
 ```
 
 **Ejecución:**
 ```bash
-bash analizar_genoma_v1.sh bacteria_001.fasta
+bash mostrar_nombre.sh
+# Output:
+# Nombre del script: mostrar_nombre.sh
+# Nombre sin ruta: mostrar_nombre.sh
+
+bash ~/proyectos/mostrar_nombre.sh
+# Output:
+# Nombre del script: /home/usuario/proyectos/mostrar_nombre.sh
+# Nombre sin ruta: mostrar_nombre.sh
 ```
 
----
-
-### Versión 2: Análisis Ampliado con Múltiples Métricas
+### `$1, $2, $3...`: Argumentos Posicionales
 
 ```bash
 #!/bin/bash
-# Script: analizar_genoma_v2.sh
-# Descripción: Análisis completo de archivo FASTA genómico
+# Script: procesar_argumentos.sh
+
+echo "Primer argumento: $1"
+echo "Segundo argumento: $2"
+echo "Tercer argumento: $3"
+```
+
+**Ejecución:**
+```bash
+bash procesar_argumentos.sh bacteria genoma secuencias
+# Output:
+# Primer argumento: bacteria
+# Segundo argumento: genoma
+# Tercer argumento: secuencias
+```
+
+### `$#`: Número Total de Argumentos
+
+```bash
+#!/bin/bash
+# Script: contar_argumentos.sh
+
+echo "Número total de argumentos: $#"
+
+# Ejemplo de validación
+if [ $# -eq 0 ]; then
+    echo "ERROR: No se proporcionaron argumentos"
+    exit 1
+fi
+
+echo "Argumentos recibidos: $@"
+```
+
+**Ejecución:**
+```bash
+bash contar_argumentos.sh
+# Output: Número total de argumentos: 0
+# Output: ERROR: No se proporcionaron argumentos
+
+bash contar_argumentos.sh genoma.fasta analisis.txt
+# Output: Número total de argumentos: 2
+# Output: Argumentos recibidos: genoma.fasta analisis.txt
+```
+
+### `$$`: PID del Proceso
+
+```bash
+#!/bin/bash
+# Script: mostrar_pid.sh
+
+echo "PID de este script: $$"
+echo "PID del shell padre: $PPID"
+
+# Crear subshell y mostrar su PID
+bash -c 'echo "PID del subshell: $$"'
+```
+
+**Ejecución:**
+```bash
+bash mostrar_pid.sh
+# Output:
+# PID de este script: 12345
+# PID del shell padre: 12340
+# PID del subshell: 12346
+```
+
+### `$?`: Código de Salida del Último Comando
+
+```bash
+#!/bin/bash
+# Script: verificar_exito.sh
+
+# Comando exitoso
+ls /home
+echo "Código de salida ls: $?"  # Output: 0
+
+# Comando fallido
+ls /directorio_inexistente 2>/dev/null
+echo "Código de salida: $?"     # Output: 2 (error)
+```
+
+**Códigos comunes:**
+- `0` = Éxito
+- `1` = Error general
+- `2` = Uso incorrecto
+- `127` = Comando no encontrado
+
+---
+
+## 8. EJEMPLO PRÁCTICO COMPLETO: SCRIPT DE INFORMACIÓN
+
+Este script integra todos los conceptos aprendidos:
+
+```bash
+#!/bin/bash
+# Script: analizar_archivo.sh
+# Descripción: Analiza un archivo FASTA
 # Autor: [Tu nombre]
-# Fecha: 2025-02-XX
-# Uso: bash analizar_genoma_v2.sh archivo.fasta
+# Fecha: [Fecha]
+# Uso: bash analizar_archivo.sh archivo.fasta [directorio_salida]
+
+# ========== VALIDACIÓN DE ARGUMENTOS ==========
+# Verificar número de argumentos
+if [ $# -lt 1 ]; then
+    echo "Uso: $0 archivo.fasta [directorio_salida]"
+    echo "Ejemplo: $0 bacteria.fasta resultados/"
+    exit 1
+fi
 
 # ========== VARIABLES DE ENTRADA ==========
-ARCHIVO_FASTA="$1"
-NOMBRE_MUESTRA=$(basename $ARCHIVO_FASTA .fasta)
+ARCHIVO_ENTRADA="$1"
+DIRECTORIO_SALIDA="${2:-.}"    # Si no proporciona, usa directorio actual
 
-# ========== VARIABLES DE FECHA Y USUARIO ==========
+# ========== VARIABLES DE SISTEMA ==========
+USUARIO=$(whoami)
 FECHA=$(date +"%Y-%m-%d")
 HORA=$(date +"%H:%M:%S")
-USUARIO=$(whoami)
-DIRECTORIO_TRABAJO=$(pwd)
+SCRIPT_NAME=$(basename $0)
+SCRIPT_PID=$$
 
-# ========== VARIABLES DE CÁLCULOS ==========
-TAMAÑO_BYTES=$(wc -c < $ARCHIVO_FASTA)
-TAMAÑO_MB=$(echo "scale=2; $TAMAÑO_BYTES / 1048576" | bc)
-NUM_SECUENCIAS=$(grep -c "^>" $ARCHIVO_FASTA)
-NUM_LINEAS=$(wc -l < $ARCHIVO_FASTA)
+# ========== VARIABLES DE CÁLCULO ==========
+# Nombre del archivo sin extensión
+NOMBRE_BASE=$(basename "$ARCHIVO_ENTRADA" .fasta)
 
-# Calcular longitud total del genoma
-LONGITUD_TOTAL=0
-while IFS= read -r linea; do
-    if [[ ! "$linea" =~ ^">" ]]; then
-        LONGITUD_TOTAL=$((LONGITUD_TOTAL + ${#linea}))
-    fi
-done < $ARCHIVO_FASTA
+# Contar secuencias
+NUM_SECUENCIAS=$(grep -c "^>" "$ARCHIVO_ENTRADA")
 
-# ========== CREAR DIRECTORIO DE RESULTADOS ==========
-DIRECTORIO_RESULTADOS="resultados_${NOMBRE_MUESTRA}_${FECHA}"
-mkdir -p $DIRECTORIO_RESULTADOS
+# Tamaño del archivo
+TAMAÑO_BYTES=$(wc -c < "$ARCHIVO_ENTRADA")
+TAMAÑO_KB=$((TAMAÑO_BYTES / 1024))
+
+# ========== CREAR DIRECTORIO DE SALIDA ==========
+mkdir -p "$DIRECTORIO_SALIDA"
+
+# ========== ARCHIVO DE REPORTE ==========
+REPORTE="$DIRECTORIO_SALIDA/${NOMBRE_BASE}_reporte.txt"
 
 # ========== GENERAR REPORTE ==========
-ARCHIVO_REPORTE="$DIRECTORIO_RESULTADOS/reporte_analisis.txt"
-
-cat > $ARCHIVO_REPORTE << EOF
+cat > "$REPORTE" << EOF
 ==============================================
-REPORTE DE ANÁLISIS DE GENOMA BACTERIANO
+REPORTE DE ANÁLISIS DE ARCHIVO FASTA
 ==============================================
 
-INFORMACIÓN DEL ANÁLISIS
+INFORMACIÓN DE EJECUCIÓN:
 ------------------------
-Fecha de análisis: $FECHA a las $HORA
-Usuario que ejecutó: $USUARIO
-Directorio de trabajo: $DIRECTORIO_TRABAJO
+Fecha: $FECHA a las $HORA
+Usuario: $USUARIO
+Script: $SCRIPT_NAME (PID: $SCRIPT_PID)
 
-INFORMACIÓN DEL ARCHIVO
+INFORMACIÓN DEL ARCHIVO:
 ------------------------
-Nombre de archivo: $ARCHIVO_FASTA
-Nombre de muestra: $NOMBRE_MUESTRA
-Ruta completa: $(readlink -f $ARCHIVO_FASTA)
+Nombre: $ARCHIVO_ENTRADA
+Nombre base: $NOMBRE_BASE
+Tamaño: $TAMAÑO_BYTES bytes ($TAMAÑO_KB KB)
 
-ESTADÍSTICAS DEL ARCHIVO
-------------------------
-Tamaño en bytes: $TAMAÑO_BYTES
-Tamaño en MB: $TAMAÑO_MB MB
-Número de líneas: $NUM_LINEAS
-
-ESTADÍSTICAS GENÓMICAS
+ANÁLISIS:
 ------------------------
 Número de secuencias: $NUM_SECUENCIAS
-Longitud total del genoma: $LONGITUD_TOTAL pb
-Longitud promedio por secuencia: $((LONGITUD_TOTAL / NUM_SECUENCIAS)) pb
+Secuencias promedio por KB: $((NUM_SECUENCIAS * 1024 / TAMAÑO_KB))
+
+DIRECTORIO DE SALIDA:
+------------------------
+$DIRECTORIO_SALIDA
 
 ==============================================
 FIN DEL REPORTE
 ==============================================
 EOF
 
-# ========== MOSTRAR RESUMEN EN PANTALLA ==========
+# ========== MOSTRAR INFORMACIÓN EN PANTALLA ==========
 echo ""
-echo "=========================================="
-echo "✓ ANÁLISIS COMPLETADO"
-echo "=========================================="
+echo "╔════════════════════════════════════════╗"
+echo "║ ANÁLISIS COMPLETADO EXITOSAMENTE      ║"
+echo "╚════════════════════════════════════════╝"
 echo ""
-echo "ARCHIVO ANALIZADO: $ARCHIVO_FASTA"
+echo "📄 Archivo: $ARCHIVO_ENTRADA"
+echo "📊 Secuencias: $NUM_SECUENCIAS"
+echo "💾 Tamaño: $TAMAÑO_KB KB"
+echo "📝 Reporte guardado en: $REPORTE"
 echo ""
-echo "RESULTADOS GENERALES:"
-echo "  Número de secuencias: $NUM_SECUENCIAS"
-echo "  Longitud total: $LONGITUD_TOTAL pb"
-echo "  Longitud promedio: $((LONGITUD_TOTAL / NUM_SECUENCIAS)) pb"
-echo "  Tamaño del archivo: $TAMAÑO_MB MB"
-echo ""
-echo "REPORTE GUARDADO EN:"
-echo "  $ARCHIVO_REPORTE"
-echo ""
-echo "=========================================="
 ```
-
-**Características:**
-- ✅ Calcula múltiples métricas (tamaño, número de secuencias, longitud total)
-- ✅ Crea directorio de resultados dinámicamente
-- ✅ Genera reporte en archivo de texto
-- ✅ Muestra resumen en pantalla
-- ✅ Usa expansión de comandos (`$()`)
-- ✅ Buena documentación
 
 **Ejecución:**
 ```bash
-bash analizar_genoma_v2.sh bacteria_001.fasta
-```
+bash analizar_archivo.sh bacteria.fasta
 
-**Output esperado:**
-```
-==========================================
-✓ ANÁLISIS COMPLETADO
-==========================================
-
-ARCHIVO ANALIZADO: bacteria_001.fasta
-
-RESULTADOS GENERALES:
-  Número de secuencias: 5
-  Longitud total: 4850 pb
-  Longitud promedio: 970 pb
-  Tamaño del archivo: 0.00 MB
-
-REPORTE GUARDADO EN:
-  resultados_bacteria_001_2025-02-15/reporte_analisis.txt
-
-==========================================
+# Output:
+# ╔════════════════════════════════════════╗
+# ║ ANÁLISIS COMPLETADO EXITOSAMENTE      ║
+# ╚════════════════════════════════════════╝
+#
+# 📄 Archivo: bacteria.fasta
+# 📊 Secuencias: 1250
+# 💾 Tamaño: 256 KB
+# 📝 Reporte guardado en: ./bacteria_reporte.txt
 ```
 
 ---
 
-### Versión 3: Análisis Profesional con Directorios de Proyecto
+## 9. BUENAS PRÁCTICAS
 
-La versión final integra variables de proyecto completo:
+### Nomenclatura de Variables
+
+```bash
+# ✓ BIEN: Nombres descriptivos en MAYÚSCULAS
+ARCHIVO_ENTRADA="bacteria.fasta"
+DIRECTORIO_SALIDA="/resultados"
+NUM_SECUENCIAS=1000
+
+# ✗ MAL: Nombres vagos
+a="bacteria.fasta"
+d="/resultados"
+n=1000
+
+# ✗ MAL: Espacios en nombres
+ARCHIVO ENTRADA="bacteria.fasta"
+```
+
+### Uso de Comillas
+
+```bash
+# ✓ BIEN: Siempre usar comillas en variables
+mkdir "$DIRECTORIO"
+echo "$USUARIO"
+
+# ✗ MAL: Sin comillas (problemas con espacios)
+mkdir $DIRECTORIO
+echo $USUARIO
+```
+
+### Comentarios y Documentación
 
 ```bash
 #!/bin/bash
 # Script: analizar_genoma.sh
-# Descripción: Análisis profesional de genomas bacterianos
+# Descripción: Análisis completo de archivo genómico
 # Autor: [Tu nombre]
-# Fecha: 2025-02-XX
-# Uso: bash analizar_genoma.sh archivo.fasta [directorio_proyecto]
+# Fecha: 2025-02-15
+# Uso: bash analizar_genoma.sh archivo.fasta
 
-# ========== VALIDAR ARGUMENTOS ==========
-if [ -z "$1" ]; then
-    echo "Uso: bash $0 archivo.fasta [directorio_proyecto]"
-    exit 1
-fi
-
-# ========== VARIABLES DE ENTRADA ==========
-ARCHIVO_FASTA="$1"
-DIRECTORIO_PROYECTO="${2:-.}"
-
-# Validar que el archivo existe
-if [ ! -f "$ARCHIVO_FASTA" ]; then
-    echo "ERROR: Archivo no encontrado: $ARCHIVO_FASTA"
-    exit 1
-fi
-
-# ========== VARIABLES DE IDENTIFICACIÓN ==========
-NOMBRE_MUESTRA=$(basename $ARCHIVO_FASTA .fasta)
-FECHA=$(date +"%Y-%m-%d")
-HORA=$(date +"%H:%M:%S")
-USUARIO=$(whoami)
-HOSTNAME=$(hostname)
-
-# ========== VARIABLES DE DIRECTORIOS DEL PROYECTO ==========
-DATA_PROCESSED="$DIRECTORIO_PROYECTO/datos_procesados"
-RESULTS="$DIRECTORIO_PROYECTO/resultados"
-LOGS="$DIRECTORIO_PROYECTO/logs"
-
-# Crear directorios si no existen
-mkdir -p $DATA_PROCESSED
-mkdir -p $RESULTS
-mkdir -p $LOGS
-
-# ========== VARIABLES DE SALIDA ==========
-ARCHIVO_PROCESADO="$DATA_PROCESSED/${NOMBRE_MUESTRA}_analizado.fasta"
-DIRECTORIO_RESULTADOS="$RESULTS/${NOMBRE_MUESTRA}"
-ARCHIVO_REPORTE="$DIRECTORIO_RESULTADOS/reporte_completo.txt"
-ARCHIVO_LOG="$LOGS/analisis_${NOMBRE_MUESTRA}_${FECHA}.log"
-ARCHIVO_ESTADISTICAS="$DIRECTORIO_RESULTADOS/estadisticas.csv"
-
-# Crear directorio de resultados específico
-mkdir -p $DIRECTORIO_RESULTADOS
-
-# ========== CALCULAR ESTADÍSTICAS ==========
-# Información general del archivo
-TAMAÑO_BYTES=$(wc -c < $ARCHIVO_FASTA)
-TAMAÑO_MB=$(echo "scale=3; $TAMAÑO_BYTES / 1048576" | bc)
-NUM_SECUENCIAS=$(grep -c "^>" $ARCHIVO_FASTA)
-NUM_LINEAS=$(wc -l < $ARCHIVO_FASTA)
-
-# Calcular longitud total y estadísticas GC
-LONGITUD_TOTAL=0
-BASES_G=0
-BASES_C=0
-
-while IFS= read -r linea; do
-    if [[ ! "$linea" =~ ^">" ]]; then
-        LONGITUD_TOTAL=$((LONGITUD_TOTAL + ${#linea}))
-        BASES_G=$((BASES_G + $(echo $linea | grep -o 'G' | wc -l)))
-        BASES_G=$((BASES_G + $(echo $linea | grep -o 'g' | wc -l)))
-        BASES_C=$((BASES_C + $(echo $linea | grep -o 'C' | wc -l)))
-        BASES_C=$((BASES_C + $(echo $linea | grep -o 'c' | wc -l)))
-    fi
-done < $ARCHIVO_FASTA
-
-GC_TOTAL=$((BASES_G + BASES_C))
-PORCENTAJE_GC=$(echo "scale=2; ($GC_TOTAL * 100) / $LONGITUD_TOTAL" | bc)
-
-# ========== REGISTRAR EN LOG ==========
-cat > $ARCHIVO_LOG << EOF
-[$(date +"%Y-%m-%d %H:%M:%S")] Inicio de análisis
-Usuario: $USUARIO
-Hostname: $HOSTNAME
-Archivo: $ARCHIVO_FASTA
-Nombre de muestra: $NOMBRE_MUESTRA
-
-[$(date +"%Y-%m-%d %H:%M:%S")] Análisis completado exitosamente
-Secuencias: $NUM_SECUENCIAS
-Longitud total: $LONGITUD_TOTAL pb
-Contenido GC: $PORCENTAJE_GC%
-EOF
-
-# ========== GENERAR REPORTE COMPLETO ==========
-cat > $ARCHIVO_REPORTE << EOF
-==============================================
-REPORTE COMPLETO DE ANÁLISIS DE GENOMA
-==============================================
-
-INFORMACIÓN DEL ANÁLISIS
-------------------------
-Fecha: $FECHA a las $HORA
-Usuario: $USUARIO
-Computadora: $HOSTNAME
-Nombre de muestra: $NOMBRE_MUESTRA
-
-UBICACIÓN DE ARCHIVOS
-------------------------
-Archivo original: $ARCHIVO_FASTA
-Resultados: $DIRECTORIO_RESULTADOS
-Log de ejecución: $ARCHIVO_LOG
-
-INFORMACIÓN DEL ARCHIVO
-------------------------
-Tamaño: $TAMAÑO_BYTES bytes ($TAMAÑO_MB MB)
-Número de líneas: $NUM_LINEAS
-
-ESTADÍSTICAS GENÓMICAS
-------------------------
-Número de secuencias: $NUM_SECUENCIAS
-Longitud total: $LONGITUD_TOTAL pb
-Longitud promedio por secuencia: $((LONGITUD_TOTAL / NUM_SECUENCIAS)) pb
-
-Bases G: $BASES_G
-Bases C: $BASES_C
-Contenido GC total: $PORCENTAJE_GC%
-
-==============================================
-EOF
-
-# ========== GENERAR ARCHIVO CSV DE ESTADÍSTICAS ==========
-cat > $ARCHIVO_ESTADISTICAS << EOF
-Parámetro,Valor
-Nombre de muestra,$NOMBRE_MUESTRA
-Fecha de análisis,$FECHA
-Número de secuencias,$NUM_SECUENCIAS
-Longitud total (pb),$LONGITUD_TOTAL
-Longitud promedio (pb),$((LONGITUD_TOTAL / NUM_SECUENCIAS))
-Contenido GC (%),$PORCENTAJE_GC
-Tamaño del archivo (MB),$TAMAÑO_MB
-EOF
-
-# ========== MOSTRAR RESUMEN FINAL ==========
-echo ""
-echo "╔══════════════════════════════════════════╗"
-echo "║ ✓ ANÁLISIS COMPLETADO EXITOSAMENTE      ║"
-echo "╚══════════════════════════════════════════╝"
-echo ""
-echo "📊 INFORMACIÓN GENERAL:"
-echo "   Muestra: $NOMBRE_MUESTRA"
-echo "   Archivo: $ARCHIVO_FASTA"
-echo ""
-echo "📈 ESTADÍSTICAS GENÓMICAS:"
-echo "   Secuencias: $NUM_SECUENCIAS"
-echo "   Longitud total: $LONGITUD_TOTAL pb"
-echo "   Longitud promedio: $((LONGITUD_TOTAL / NUM_SECUENCIAS)) pb"
-echo "   Contenido GC: $PORCENTAJE_GC%"
-echo ""
-echo "💾 ARCHIVOS GENERADOS:"
-echo "   ✓ Reporte: $ARCHIVO_REPORTE"
-echo "   ✓ Estadísticas CSV: $ARCHIVO_ESTADISTICAS"
-echo "   ✓ Log: $ARCHIVO_LOG"
-echo ""
-echo "╚══════════════════════════════════════════╝"
+# Definir variables importantes
+ARCHIVO="$1"           # Primer argumento del script
+FECHA=$(date +%Y-%m-%d)  # Fecha actual en formato YYYY-MM-DD
 ```
 
-**Características profesionales:**
-- ✅ Validación de argumentos
-- ✅ Integración con estructura de proyecto
-- ✅ Calcula contenido GC (relevante en bioinformática)
-- ✅ Genera múltiples formatos de salida (TXT, CSV)
-- ✅ Registro detallado en log
-- ✅ Interfaz visual mejorada con emojis
+---
 
-**Ejecución:**
+## 10. ACTIVIDADES PRÁCTICAS
+
+### Actividad 1: Crear y Manipular Variables (15 minutos)
+
+1. Crear script `mi_laboratorio.sh`:
 ```bash
-bash analizar_genoma.sh bacteria_001.fasta ~/proyectos/Mi_Proyecto_2025
+#!/bin/bash
+LABORATORIO="Genómica Computacional"
+ANALISIS="RNA-seq"
+AÑO=2025
+
+echo "Laboratorio: $LABORATORIO"
+echo "Análisis: $ANALISIS"
+echo "Año: $AÑO"
+echo "Proyecto: ${LABORATORIO}_${ANALISIS}_${AÑO}"
 ```
 
----
+2. Ejecutar: `bash mi_laboratorio.sh`
 
-## 5. ACTIVIDADES PRÁCTICAS
+### Actividad 2: Variables Locales vs Globales (20 minutos)
 
-### Actividad 1: Crear Estructura de Proyecto (30 minutos)
-1. Ejecutar `setup_proyecto.sh` con nombre personalizado
-2. Verificar que se crearon todos los directorios:
-   ```bash
-   tree proyecto_genoma_bacteriano/
-   # o
-   find proyecto_genoma_bacteriano/ -type d
-   ```
-3. Examinar contenido de `README.md` y `metadata.txt`
-4. Consultar el log en `logs/inicio_proyecto.log`
+1. Crear `test_local.sh`:
+```bash
+#!/bin/bash
+VARIABLE_LOCAL="solo aquí"
+export VARIABLE_GLOBAL="en todas partes"
 
-### Actividad 2: Analizar un Archivo FASTA (25 minutos)
-1. Crear archivo FASTA de prueba:
-   ```bash
-   cat > bacteria_test.fasta << 'EOF'
-   >secuencia_1
-   ATGCGATCGATCGATCGATCG
-   >secuencia_2
-   GCTAGCTAGCTAGCTAGCTA
-   >secuencia_3
-   TTAATTAATTAATTAATTAA
-   EOF
-   ```
-2. Ejecutar `analizar_genoma_v2.sh bacteria_test.fasta`
-3. Revisar reporte generado
+echo "En script: $VARIABLE_LOCAL y $VARIABLE_GLOBAL"
+bash -c 'echo "En subshell: LOCAL=$VARIABLE_LOCAL GLOBAL=$VARIABLE_GLOBAL"'
+```
 
-### Actividad 3: Integración Completa (20 minutos)
-1. Crear un nuevo proyecto con `setup_proyecto.sh`
-2. Copiar archivo FASTA a `datos_crudos/genomas_ensamblados/`
-3. Ejecutar `analizar_genoma.sh` proporcionando ruta del proyecto
-4. Verificar que se crearon archivos en `datos_procesados/` y `resultados/`
+2. Ejecutar y observar diferencias
 
----
+### Actividad 3: Manipulación de PATH (15 minutos)
 
-## 6. RESUMEN DE CONCEPTOS
+1. Ver PATH actual: `echo $PATH | tr ':' '\n'`
+2. Crear directorio: `mkdir ~/mi_programa`
+3. Agregar al PATH: `export PATH=$PATH:~/mi_programa`
+4. Verificar: `echo $PATH | grep mi_programa`
 
-### De Versión 1 a Versión 3: Progresión de Complejidad
+### Actividad 4: Variables Especiales (20 minutos)
 
-| Aspecto | V1 | V2 | V3 |
-|---------|----|----|-----|
-| Flexibilidad | Fija | Variables | Completa |
-| Directorios | 3 | 5 | 15+ |
-| Archivos generados | 0 | 1 | 4 |
-| Validación | No | No | Sí |
-| Integración de proyecto | No | Parcial | Completa |
+1. Crear `info_script.sh`:
+```bash
+#!/bin/bash
+echo "Script: $0"
+echo "Argumentos: $#"
+echo "Primer arg: $1"
+echo "Segundo arg: $2"
+echo "PID: $$"
+```
+
+2. Ejecutar: `bash info_script.sh datos.fasta resultados`
 
 ---
 
-## 7. PALABRAS CLAVE
+## 11. AUTOEVALUACIÓN
 
-- **Automatización:** Usar scripts para ejecutar tareas repetitivas
-- **Estructura de Proyecto:** Organización estándar de directorios
-- **Variables:** Contenedores reutilizables de información
-- **Escalabilidad:** Capacidad de manejar múltiples proyectos/muestras
-- **Documentación:** Registros de lo realizado (logs, reportes)
+### Preguntas de Comprensión
+
+1. **¿Cuál es la diferencia entre `variable=valor` y `export variable=valor`?**
+   - R: La primera crea una variable local, la segunda la hace global
+
+2. **¿Por qué una variable en subshell no afecta al shell padre?**
+   - R: Subshells son procesos independientes con memoria separada
+
+3. **¿Qué hace `echo $PATH | tr ':' '\n'`?**
+   - R: Muestra cada directorio del PATH en línea separada
+
+4. **¿Cuándo usarías comillas simples vs dobles?**
+   - R: Dobles para expansión, simples para texto literal
+
+5. **¿Qué variable contiene el número de argumentos de un script?**
+   - R: `$#`
 
 ---
 
-## 8. REFERENCIAS BIBLIOGRÁFICAS
+## 12. PALABRAS CLAVE
+
+- Variable
+- Shell / Subshell
+- Variable local
+- Variable global
+- Entorno
+- PATH
+- Expansión de comandos
+- Variables especiales
+- Argumentos posicionales
+
+---
+
+## 13. REFERENCIAS BIBLIOGRÁFICAS
 
 1. Hausenblas, M. (2022). *Learning Modern Linux*. O'Reilly Media, Inc.
 2. Blum, R., & Bresnahan, C. (2021). *Linux command line and Shell scripting bible*. Wiley.
-3. Hsu, J. (2020). *Bioinformatics Data Skills*. O'Reilly Media, Inc.
